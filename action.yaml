@@ -69,4 +69,4 @@ runs:
           -configFiles=${{inputs.path_to_flyway_config}}
     - name: Terminate SSH Tunnel
       shell: bash
-      run: ps -o pid,cmd|grep "ssh -L"|grep -v grep|awk '{print $1}'|xargs kill
+      run: ssh -S my-ctrl-socket -O exit ${{inputs.ssh_user}}@${{inputs.ssh_host}}
