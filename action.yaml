@@ -56,15 +56,18 @@ runs:
         chmod  400 ~/.ssh/ssh_key.pem
     - name: SSH connection
       shell: bash
-      run: ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} ${{inputs.ssh_user}}@${{inputs.ssh_host}} -i ~/.ssh/ssh_key.pem
+      run: |
+        ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} \
+          ${{inputs.ssh_user}}@${{inputs.ssh_host}} -i ~/.ssh/ssh_key.pem
       #run: ssh -fN -v -L 5432:${{inputs.db_host}}:${{inputs.db_port}} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
     - name: Make migrations
       shell: bash
-      run: flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
-        -user=${{inputs.db_user}} \
-        -password=${{inputs.db_password}} \
-        -locations={{inputs.path_to_migrations_folder}} \
-        -configFiles={{inputs.path_to_flyway_config}}
+      run: |
+        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
+          -user=${{inputs.db_user}} \
+          -password=${{inputs.db_password}} \
+          -locations={{inputs.path_to_migrations_folder}} \
+          -configFiles={{inputs.path_to_flyway_config}}
     - name: Terminate SSH Tunnel
       shell: bash
       run: ps -o pid,cmd|grep "ssh -L"|grep -v grep|awk '{print $1}'|xargs kill
