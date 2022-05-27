@@ -46,7 +46,7 @@ runs:
     - name: Configure SSH
       shell: bash
       run: |
-        mdkir ~/.ssh
+        mkdir ~/.ssh
         touch ~/.ssh/known_hosts
         ssh-keyscan -H ${{inputs.ssh_host}} >> ~/.ssh/known_hosts
         eval `ssh-agent -s`
