@@ -23,10 +23,9 @@ inputs:
     description: database port
     required: false
     default: '5432'
-  db_schema:
-    description: database schema
+  db_name:
+    description: database name
     required: false
-    default: 'public'
   path_to_migrations_folder:
     description: Path from repository root to the database migrations folder
     required: false
@@ -62,7 +61,7 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
+        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
           -locations=${{inputs.path_to_migrations_folder}} \
