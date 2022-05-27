@@ -25,13 +25,13 @@ inputs:
     default: '5432'
   db_name:
     description: database name
-    required: false
-  path_to_migrations_folder:
+    required: true
+  migrations_folder_path:
     description: Path from repository root to the database migrations folder
     required: false
     default: 'db/migrations'
-  path_to_flyway_config:
-    description: Path from migrations foldert to the flyway config file
+  flyway_config_path:
+    description: Path from repository root folder to the flyway config file
     required: false
     default: 'db/conf/flyway.conf'
 runs:
@@ -64,5 +64,5 @@ runs:
         flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
-          -locations=${{inputs.path_to_migrations_folder}} \
-          -configFiles=${{inputs.path_to_flyway_config}}
+          -locations=${{inputs.migrations_folder_path}} \
+          -configFiles=${{inputs.flyway_config_path}}
