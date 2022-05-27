@@ -51,7 +51,6 @@ runs:
         ssh-keyscan -H ${{inputs.ssh_host}} >> ~/.ssh/known_hosts
         eval `ssh-agent -s`
         ssh-add - <<< "${{inputs.ssh_key}}"
-        make migrate
     - name: SSH connection
       shell: bash
       run: ssh -fN -v -L 5432:${{inputs.db_host}}:${inputs.db_port} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
