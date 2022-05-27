@@ -67,6 +67,3 @@ runs:
           -password=${{inputs.db_password}} \
           -locations=${{inputs.path_to_migrations_folder}} \
           -configFiles=${{inputs.path_to_flyway_config}}
-    - name: Terminate SSH Tunnel
-      shell: bash
-      run: ssh -S my-ctrl-socket -O exit ${{inputs.ssh_user}}@${{inputs.ssh_host}}
