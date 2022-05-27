@@ -34,7 +34,7 @@ inputs:
   path_to_flyway_config:
     description: Path from migrations foldert to the flyway config file
     required: false
-    default: 'conf/flyway.conf'
+    default: 'db/conf/flyway.conf'
 runs:
   using: "composite"
   steps:
