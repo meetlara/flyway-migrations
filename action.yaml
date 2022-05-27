@@ -62,7 +62,6 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        echo "$PWD"
         flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
@@ -71,4 +70,3 @@ runs:
     - name: Terminate SSH Tunnel
       shell: bash
       run: ps -o pid,cmd|grep "ssh -L"|grep -v grep|awk '{print $1}'|xargs kill
-
