@@ -62,7 +62,7 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        ls
+        echo "$PWD"
         flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
