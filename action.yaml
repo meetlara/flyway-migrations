@@ -53,6 +53,7 @@ runs:
         eval `ssh-agent -s`
         ssh-add - <<< "${{inputs.ssh_key}}"
         echo "${{inputs.ssh_key}}" >> ~/.ssh/ssh_key.pem
+        chmod  400 ~/.ssh/ssh_key.pem
     - name: SSH connection
       shell: bash
       run: ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} \
