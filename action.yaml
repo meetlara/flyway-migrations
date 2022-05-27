@@ -22,19 +22,19 @@ inputs:
   db_port:
     description: database port
     required: false
-    default: "5432"
+    default: '5432'
   db_schema:
     description: database schema
     required: false
-    default: "public"
+    default: 'public'
   path_to_migrations_folder:
     description: Path from repository root to the database migrations folder
     required: false
-    default: "db/migrations"
+    default: 'db/migrations'
   path_to_flyway_config:
     description: Path from migrations foldert to the flyway config file
     required: false
-    default: "conf/flyway.conf"
+    default: 'conf/flyway.conf'
 runs:
   using: "composite"
   steps:
