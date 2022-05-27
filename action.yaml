@@ -48,12 +48,16 @@ runs:
       run: |
         mkdir ~/.ssh
         touch ~/.ssh/known_hosts
+        touch ~/.ssh/ssh_key.pem
         ssh-keyscan -H ${{inputs.ssh_host}} >> ~/.ssh/known_hosts
         eval `ssh-agent -s`
         ssh-add - <<< "${{inputs.ssh_key}}"
+        echo "${{inputs.ssh_key}}" >> ~/.ssh/ssh_key.pem
     - name: SSH connection
       shell: bash
-      run: ssh -fN -v -L 5432:${{inputs.db_host}}:${{inputs.db_port}} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
+      run: ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} \
+        ${{inputs.ssh_user}}@${{inputs.ssh_host}} -i ~/.ssh/key.pub
+      #run: ssh -fN -v -L 5432:${{inputs.db_host}}:${{inputs.db_port}} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
     - name: Make migrations
       shell: bash
       run: flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
