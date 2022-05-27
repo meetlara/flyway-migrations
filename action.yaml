@@ -53,7 +53,7 @@ runs:
         ssh-add - <<< "${{inputs.ssh_key}}"
     - name: SSH connection
       shell: bash
-      run: ssh -fN -v -L 5432:${{inputs.db_host}}:${inputs.db_port} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
+      run: ssh -fN -v -L 5432:${{inputs.db_host}}:${{inputs.db_port}} ${{inputs.ssh_user}}@${{inputs.ssh_host}}
     - name: Make migrations
       shell: bash
       run: flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_schema}} \
