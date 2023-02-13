@@ -34,6 +34,10 @@ inputs:
     description: Path from repository root folder to the flyway config file
     required: false
     default: 'db/conf/flyway.conf'
+  flyway_extra_params:
+    description: Add extra params to Flyway command
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -59,7 +63,7 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} \
+        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} ${{inputs.flyway_extra_params}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
           -locations=${{inputs.migrations_folder_path}} \
