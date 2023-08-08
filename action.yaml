@@ -41,7 +41,7 @@ inputs:
   flyway_command:
     type: string
     description: Commmand to run. Ej: migrate | repair
-    required: falase
+    required: false
     default: 'migrate'
 runs:
   using: "composite"
