@@ -38,6 +38,10 @@ inputs:
     description: Add extra params to Flyway command
     required: false
     default: ''
+  flyway_command:
+    description: Commmand to run. Ej: migrate | repair
+    required: falase
+    default: 'migrate'
 runs:
   using: "composite"
   steps:
@@ -63,7 +67,7 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        flyway migrate -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} ${{inputs.flyway_extra_params}} \
+        flyway ${{inputs.flyway_command}} -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} ${{inputs.flyway_extra_params}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
           -locations=${{inputs.migrations_folder_path}} \
