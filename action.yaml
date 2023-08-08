@@ -40,7 +40,7 @@ inputs:
     default: ''
   flyway_command:
     type: string
-    description: Commmand to run. Ej: migrate, repair
+    description: 'Commmand to run. Ej: migrate, repair'
     required: false
     default: 'migrate'
 runs:
