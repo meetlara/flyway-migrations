@@ -1,6 +1,10 @@
 name: "Database Migrations"
 description: "Make database migrations using flyway and an ssh connection for PostgreSQL"
 inputs:
+  flyway_version:
+    description: "Flyway version"
+    required: false
+    default: '8.5.11'
   ssh_key:
     description: ssh key
     required: true
@@ -39,16 +43,27 @@ inputs:
     required: false
     default: ''
   flyway_command:
-    type: string
-    description: 'Commmand to run. Ej: migrate, repair'
+    description: 'Command to run. Ej: migrate, repair'
     required: false
     default: 'migrate'
 runs:
   using: "composite"
   steps:
-    - name: Install Flyway
+    - name: Cache Flyway binary
+      uses: actions/cache@v3
+      with:
+        path: flyway-${{inputs.flyway_version}}
+        key: flyway-${{inputs.flyway_version}}-linux-x64
+
+    - name: Install Flyway (if not cached)
+      if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.11/flyway-commandline-8.5.11-linux-x64.tar.gz | tar xvz && sudo ln -s `pwd`/flyway-8.5.11/flyway /usr/local/bin 
+      run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${{inputs.flyway_version}}/flyway-commandline-${{inputs.flyway_version}}-linux-x64.tar.gz | tar xvz
+
+    - name: Configure Flyway
+      shell: bash
+      run: sudo ln -s `pwd`/flyway-${{inputs.flyway_version}}/flyway /usr/local/bin
+
     - name: Configure SSH
       shell: bash
       run: |
@@ -60,11 +75,13 @@ runs:
         ssh-add - <<< "${{inputs.ssh_key}}"
         echo "${{inputs.ssh_key}}" >> ~/.ssh/ssh_key.pem
         chmod  400 ~/.ssh/ssh_key.pem
+
     - name: SSH connection
       shell: bash
       run: |
         ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} \
           ${{inputs.ssh_user}}@${{inputs.ssh_host}} -i ~/.ssh/ssh_key.pem
+
     - name: Make migrations
       shell: bash
       run: |
