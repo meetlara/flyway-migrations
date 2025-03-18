@@ -41,7 +41,7 @@ inputs:
   flyway_extra_params:
     description: Add extra params to Flyway command. By defaults, it adds -outOfOrder=true
     required: false
-    default: '-outOfOrder="true"'
+    default: '-outOfOrder="true" -ignoreMigrationPatterns="*:missing"'
   flyway_command:
     description: 'Command to run. Ej: migrate, repair'
     required: false
