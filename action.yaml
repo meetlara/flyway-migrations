@@ -46,6 +46,10 @@ inputs:
     description: 'Command to run. Ej: migrate, repair'
     required: false
     default: 'migrate'
+  allow_out_of_order:
+    description: 'Weather to run migrations out of order or not. If a previous migration is missing, it will run anyways'
+    required: false
+    default: 'true'
 runs:
   using: "composite"
   steps:
@@ -85,7 +89,7 @@ runs:
     - name: Make migrations
       shell: bash
       run: |
-        flyway ${{inputs.flyway_command}} -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} ${{inputs.flyway_extra_params}} \
+        flyway ${{inputs.flyway_command}} -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} -outOfOrder="${{inputs.allow_out_of_order}}" ${{inputs.flyway_extra_params}} \
           -user=${{inputs.db_user}} \
           -password=${{inputs.db_password}} \
           -locations=${{inputs.migrations_folder_path}} \
