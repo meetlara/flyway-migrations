@@ -67,7 +67,7 @@ runs:
     - name: Configure SSH
       shell: bash
       run: |
-        mkdir ~/.ssh
+        mkdir -p ~/.ssh
         touch ~/.ssh/known_hosts
         touch ~/.ssh/ssh_key.pem
         ssh-keyscan -H ${{inputs.ssh_host}} >> ~/.ssh/known_hosts
