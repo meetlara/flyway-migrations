@@ -84,9 +84,17 @@ runs:
 
     - name: Make migrations
       shell: bash
+      env:
+        FLYWAY_COMMAND: ${{inputs.flyway_command}}
+        DB_NAME: ${{inputs.db_name}}
+        FLYWAY_EXTRA_PARAMS: ${{inputs.flyway_extra_params}}
+        DB_USER: ${{inputs.db_user}}
+        DB_PASSWORD: ${{inputs.db_password}}
+        MIGRATIONS_FOLDER_PATH: ${{inputs.migrations_folder_path}}
+        FLYWAY_CONFIG_PATH: ${{inputs.flyway_config_path}}
       run: |
-        flyway ${{inputs.flyway_command}} -url=jdbc:postgresql://localhost:5432/${{inputs.db_name}} ${{inputs.flyway_extra_params}} \
-          -user=${{inputs.db_user}} \
-          -password=${{inputs.db_password}} \
-          -locations=${{inputs.migrations_folder_path}} \
-          -configFiles=${{inputs.flyway_config_path}}
+        flyway $FLYWAY_COMMAND -url=jdbc:postgresql://localhost:5432/$DB_NAME $FLYWAY_EXTRA_PARAMS \
+          -user=$DB_USER \
+          -password=$DB_PASSWORD \
+          -locations=$MIGRATIONS_FOLDER_PATH \
+          -configFiles=$FLYWAY_CONFIG_PATH
