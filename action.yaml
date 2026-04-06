@@ -58,7 +58,9 @@ runs:
     - name: Install Flyway (if not cached)
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${{inputs.flyway_version}}/flyway-commandline-${{inputs.flyway_version}}-linux-x64.tar.gz | tar xvz
+      env:
+        FLYWAY_VERSION: ${{inputs.flyway_version}}
+      run: wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/$FLYWAY_VERSION/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz | tar xvz
 
     - name: Configure Flyway
       shell: bash
