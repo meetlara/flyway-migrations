@@ -64,25 +64,35 @@ runs:
 
     - name: Configure Flyway
       shell: bash
-      run: sudo ln -s `pwd`/flyway-${{inputs.flyway_version}}/flyway /usr/local/bin
+      env:
+        FLYWAY_VERSION: ${{inputs.flyway_version}}
+      run: sudo ln -s `pwd`/flyway-$FLYWAY_VERSION/flyway /usr/local/bin
 
     - name: Configure SSH
       shell: bash
+      env:
+        SSH_HOST: ${{inputs.ssh_host}}
+        SSH_KEY: ${{inputs.ssh_key}}
       run: |
         mkdir -p ~/.ssh
         touch ~/.ssh/known_hosts
         touch ~/.ssh/ssh_key.pem
-        ssh-keyscan -H ${{inputs.ssh_host}} >> ~/.ssh/known_hosts
+        ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
         eval `ssh-agent -s`
-        ssh-add - <<< "${{inputs.ssh_key}}"
-        echo "${{inputs.ssh_key}}" >> ~/.ssh/ssh_key.pem
+        ssh-add - <<< "$SSH_KEY"
+        echo "$SSH_KEY" >> ~/.ssh/ssh_key.pem
         chmod  400 ~/.ssh/ssh_key.pem
 
     - name: SSH connection
       shell: bash
+      env:
+        DB_HOST: ${{inputs.db_host}}
+        DB_PORT: ${{inputs.db_port}}
+        SSH_USER: ${{inputs.ssh_user}}
+        SSH_HOST: ${{inputs.ssh_host}}
       run: |
-        ssh -o ExitOnForwardFailure=yes -f -N -L 5432:${{inputs.db_host}}:${{inputs.db_port}} \
-          ${{inputs.ssh_user}}@${{inputs.ssh_host}} -i ~/.ssh/ssh_key.pem
+        ssh -o ExitOnForwardFailure=yes -f -N -L 5432:$DB_HOST:$DB_PORT \
+          $SSH_USER@$SSH_HOST -i ~/.ssh/ssh_key.pem
 
     - name: Make migrations
       shell: bash
