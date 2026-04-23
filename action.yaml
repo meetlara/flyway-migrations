@@ -4,7 +4,7 @@ inputs:
   flyway_version:
     description: "Flyway version"
     required: false
-    default: '8.5.11'
+    default: '10.22.0'
   ssh_key:
     description: ssh key
     required: true
@@ -50,7 +50,7 @@ runs:
   using: "composite"
   steps:
     - name: Cache Flyway binary
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: flyway-${{inputs.flyway_version}}
         key: flyway-${{inputs.flyway_version}}-linux-x64
