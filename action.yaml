@@ -1,19 +1,37 @@
 name: "Database Migrations"
-description: "Make database migrations using flyway and an ssh connection for PostgreSQL"
+description: "Make database migrations using flyway through a bastion (SSM Session Manager or SSH tunnel) for PostgreSQL"
 inputs:
   flyway_version:
     description: "Flyway version"
     required: false
     default: '8.5.11'
+  aws_role_arn:
+    description: >-
+      IAM role to assume with GitHub OIDC. When set, the DB is reached with an
+      SSM Session Manager port forward through the bastion (no SSH). The calling
+      workflow needs `permissions: id-token: write`.
+    required: false
+    default: ''
+  aws_region:
+    description: AWS region of the bastion (SSM mode)
+    required: false
+    default: 'us-east-1'
+  bastion_name:
+    description: Value of the bastion's Name tag (SSM mode)
+    required: false
+    default: ''
   ssh_key:
-    description: ssh key
-    required: true
+    description: ssh key (SSH mode, used when aws_role_arn is empty)
+    required: false
+    default: ''
   ssh_host:
-    description: ssh host
-    required: true
+    description: ssh host (SSH mode)
+    required: false
+    default: ''
   ssh_user:
-    description: ssh username
-    required: true
+    description: ssh username (SSH mode)
+    required: false
+    default: ''
   db_host:
     description: database host
     required: true
@@ -68,7 +86,85 @@ runs:
         FLYWAY_VERSION: ${{inputs.flyway_version}}
       run: sudo ln -s `pwd`/flyway-$FLYWAY_VERSION/flyway /usr/local/bin
 
+    - name: Check connection inputs
+      shell: bash
+      env:
+        AWS_ROLE_ARN: ${{inputs.aws_role_arn}}
+        BASTION_NAME: ${{inputs.bastion_name}}
+        SSH_HOST: ${{inputs.ssh_host}}
+        SSH_KEY: ${{inputs.ssh_key}}
+        SSH_USER: ${{inputs.ssh_user}}
+      run: |
+        if [ -n "$AWS_ROLE_ARN" ]; then
+          if [ -z "$BASTION_NAME" ]; then
+            echo "::error::bastion_name is required when aws_role_arn is set"
+            exit 1
+          fi
+        elif [ -z "$SSH_HOST" ] || [ -z "$SSH_KEY" ] || [ -z "$SSH_USER" ]; then
+          echo "::error::Set aws_role_arn + bastion_name (SSM) or ssh_host + ssh_user + ssh_key (SSH)"
+          exit 1
+        fi
+
+    # --- SSM mode -------------------------------------------------------------
+    - name: Configure AWS credentials (OIDC)
+      if: inputs.aws_role_arn != ''
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+      with:
+        role-to-assume: ${{inputs.aws_role_arn}}
+        aws-region: ${{inputs.aws_region}}
+        role-session-name: flyway-${{github.run_id}}-${{github.run_attempt}}
+
+    - name: SSM port forwarding to the database
+      if: inputs.aws_role_arn != ''
+      shell: bash
+      env:
+        BASTION_NAME: ${{inputs.bastion_name}}
+        DB_HOST: ${{inputs.db_host}}
+        DB_PORT: ${{inputs.db_port}}
+      run: |
+        set -euo pipefail
+
+        if ! command -v session-manager-plugin >/dev/null 2>&1; then
+          curl -fsSL -o "$RUNNER_TEMP/session-manager-plugin.deb" \
+            https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+          sudo dpkg -i "$RUNNER_TEMP/session-manager-plugin.deb"
+        fi
+
+        # Resolved by tag: the instance ID changes when the bastion is replaced.
+        INSTANCE_IDS=$(aws ec2 describe-instances \
+          --filters "Name=tag:Name,Values=$BASTION_NAME" "Name=instance-state-name,Values=running" \
+          --query 'Reservations[].Instances[].InstanceId' --output text)
+        read -r -a IDS <<< "$INSTANCE_IDS"
+        if [ "${#IDS[@]}" -ne 1 ]; then
+          echo "::error::Expected exactly one running instance tagged Name=$BASTION_NAME, found ${#IDS[@]}"
+          exit 1
+        fi
+
+        PARAMS=$(jq -nc --arg host "$DB_HOST" --arg port "$DB_PORT" \
+          '{host: [$host], portNumber: [$port], localPortNumber: ["5432"]}')
+
+        # Runs in the background for the rest of the job (like `ssh -f`); the
+        # runner kills it during job cleanup.
+        setsid nohup aws ssm start-session \
+          --target "${IDS[0]}" \
+          --document-name AWS-StartPortForwardingSessionToRemoteHost \
+          --parameters "$PARAMS" \
+          > "$RUNNER_TEMP/ssm-session.log" 2>&1 < /dev/null &
+
+        for _ in $(seq 1 30); do
+          if (exec 3<>/dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+            echo "SSM port forward ready on localhost:5432"
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "::error::SSM port forward did not come up in 30s"
+        cat "$RUNNER_TEMP/ssm-session.log"
+        exit 1
+
+    # --- SSH mode (legacy) ----------------------------------------------------
     - name: Configure SSH
+      if: inputs.aws_role_arn == ''
       shell: bash
       env:
         SSH_HOST: ${{inputs.ssh_host}}
@@ -84,6 +180,7 @@ runs:
         chmod  400 ~/.ssh/ssh_key.pem
 
     - name: SSH connection
+      if: inputs.aws_role_arn == ''
       shell: bash
       env:
         DB_HOST: ${{inputs.db_host}}
